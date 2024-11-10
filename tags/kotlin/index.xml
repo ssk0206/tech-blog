@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kotlin on ssk.dev 技術ブログ</title><link>https://sskdev.jp/tags/kotlin/</link><description>Recent content in Kotlin on ssk.dev 技術ブログ</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 05 Nov 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://sskdev.jp/tags/kotlin/index.xml" rel="self" type="application/rss+xml"/><item><title>Kotlin と Spring Boot で GraphQL に入門</title><link>https://sskdev.jp/p/20241105/</link><pubDate>Tue, 05 Nov 2024 00:00:00 +0000</pubDate><guid>https://sskdev.jp/p/20241105/</guid><description>&lt;h2 id="spring-initializr-でプロジェクト作成">Spring Initializr でプロジェクト作成
+&lt;/h2>&lt;p>&lt;a class="link" href="https://start.spring.io/" target="_blank" rel="noopener"
+>https://start.spring.io/&lt;/a>&lt;/p>
+&lt;p>&lt;img src="https://sskdev.jp/p/20241105/initializer.png"
+width="1193"
+height="802"
+srcset="https://sskdev.jp/p/20241105/initializer_hu17246906645200879803.png 480w, https://sskdev.jp/p/20241105/initializer_hu9784444986428811034.png 1024w"
+loading="lazy"
+alt="Spring Initializrのスクリーンショット"
+class="gallery-image"
+data-flex-grow="148"
+data-flex-basis="357px"
+>&lt;/p>
+&lt;p>とりあえずこれで作成して、必要になった Dependencies は後から付け足します。&lt;/p>
+&lt;p>ダウンロードしたプロジェクトを Java や Kotlin と相性がいい IntelliJ IDEA で開きます。
+無料版として IntelliJ IDEA Community Edition もあるので、今回はこちらを使います。&lt;/p>
+&lt;p>&lt;a class="link" href="https://www.jetbrains.com/ja-jp/idea/download/?section=mac" target="_blank" rel="noopener"
+>https://www.jetbrains.com/ja-jp/idea/download/?section=mac&lt;/a>&lt;/p>
+&lt;p>&lt;img src="https://sskdev.jp/p/20241105/directory.png"
+width="454"
+height="518"
+srcset="https://sskdev.jp/p/20241105/directory_hu6583892259092019266.png 480w, https://sskdev.jp/p/20241105/directory_hu17653995649308084300.png 1024w"
+loading="lazy"
+alt="ディレクトリ"
+class="gallery-image"
+data-flex-grow="87"
+data-flex-basis="210px"
+>&lt;/p>
+&lt;p>作成されたパッケージを開くとこんな感じです。resources 配下に graphql パッケージが作成されていますね。
+ここに schema ファイルを保存するみたいです。&lt;/p>
+&lt;p>今回はざっくりこんな構成で行きます。&lt;/p>
+&lt;h2 id="パッケージ構成アーキテクチャ">パッケージ構成・アーキテクチャ
+&lt;/h2>&lt;p>オニオンアーキテクチャ風で行きたいと思います。&lt;/p>
+&lt;p>&lt;code>com.example.demo&lt;/code> 配下&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>presentation&lt;/code> Controller クラス や Request/Response 用の DTO を置くところ&lt;/li>
+&lt;li>&lt;code>application&lt;/code> Application Service クラス を置くところ&lt;/li>
+&lt;li>&lt;code>domain&lt;/code> エンティティや Domain Service クラスを置くところ&lt;/li>
+&lt;li>&lt;code>infrastructure&lt;/code> Repository クラスなど DB や外部プラットフォームと繋ぐところ&lt;/li>
+&lt;/ul>
+&lt;h2 id="初期設定">初期設定
+&lt;/h2>&lt;p>&lt;code>application.properties&lt;/code>ファイルを&lt;code>application.yml&lt;/code> ファイルに変更します。
+別にどっちでもいいのですが、私が yml の方が慣れているので変更しておきます。&lt;/p>
+&lt;p>spring.graphql.path はこの API のエンドポイント
+graphiql というのは開発ツールです。これだけで使えて簡単なので &lt;code>enabled&lt;/code> を &lt;code>true&lt;/code> にしておきます。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yml" data-lang="yml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">spring&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">application&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">demo&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">graphql&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">path&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/graphql&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">graphiql&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">enabled&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="graphql-が叩けることを確認">GraphQL が叩けることを確認
+&lt;/h2>&lt;p>まずは GraphQL が叩けることを確認しましょう。&lt;/p>
+&lt;p>&lt;code>resources/graphql&lt;/code>配下に &lt;code>schema.grahqls&lt;/code>ファイルを作成してください。
+今回は Post というユーザーが投稿した程のものを表示させるための実装を行います。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-graphql" data-lang="graphql">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">type&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nc">Query&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="py">posts&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="nc">Post&lt;/span>&lt;span class="p">!]!&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="kd">type&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nc">Post&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="py">id&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nc">Int&lt;/span>&lt;span class="p">!&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="py">content&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nc">String&lt;/span>&lt;span class="p">!&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="controller-から返してみる">Controller から返してみる
+&lt;/h3>&lt;p>domain パッケージに model パッケージを作成して、その中に&lt;code>Post.kt&lt;/code>を作成します。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-kotlin" data-lang="kotlin">&lt;span class="line">&lt;span class="cl">&lt;span class="k">data&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">Post&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">val&lt;/span> &lt;span class="py">id&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Int&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">val&lt;/span> &lt;span class="py">content&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Int&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>presentation パッケージに controller パッケージを追加し&lt;code>PostController.kt&lt;/code>を作成します。
+この中に&lt;code>posts&lt;/code>というメソッドを作成します。このメソッドと schema.graphqls に書いたクエリを紐づけるわけですね。&lt;/p>
+&lt;p>紐づけるためには&lt;code>@QueryMapping&lt;/code>というアノテーションを追加します。なんとこれだけで紐づきます。簡単ですね。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-kotlin" data-lang="kotlin">&lt;span class="line">&lt;span class="cl">&lt;span class="nd">@Controller&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">class&lt;/span> &lt;span class="nc">PostController&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nd">@QueryMapping&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">fun&lt;/span> &lt;span class="nf">posts&lt;/span>&lt;span class="p">():&lt;/span> &lt;span class="n">List&lt;/span>&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="n">Post&lt;/span>&lt;span class="p">&amp;gt;&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="n">Post&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="m">1&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;投稿1&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="n">Post&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s2">&amp;#34;投稿2&amp;#34;&lt;/span>&lt;span class="p">)]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>続く&lt;/p></description></item></channel></rss>
